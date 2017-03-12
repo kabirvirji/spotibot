@@ -1,0 +1,39 @@
+{
+  "name": "spotibot",
+  "version": "1.0.0",
+  "description": "A Spotify Messenger bot",
+  "license": "ISC",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kabirvirji/spotibot.git"
+  },
+  "author": {
+    "name": "Kabir Virji",
+    "email": "kabirvirji@gmail.com",
+    "url": "kabirvirji"
+  },
+  "maintainers": {
+    "name": "Kabir Virji",
+    "email": "kabirvirji@gmail.com",
+    "url": "kabirvirji"
+  },
+  "bin": {
+    "spotibot": "index.js"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/kabirvirji/spotibot/issues"
+  },
+  "homepage": "https://github.com/kabirvirji/spotibot#readme",
+  "dependencies": {
+    "chalk": "^1.1.3",
+    "facebook-chat-api": "^1.3.0",
+    "meow": "^3.7.0",
+    "spotify-node-applescript": "^1.0.0",
+    "spotify-web-api-node": "^2.3.6"
+  }
+}
