@@ -5,25 +5,39 @@ const login = require('facebook-chat-api');
 const fs = require('fs');
 const meow = require('meow');
 const chalk = require('chalk');
+const inquirer = require('inquirer');
+const Conf = require('conf');
 
-const spotibot = async function singlespotify(inputs, flags) {
 
-	const configFile = flags['c'];
+// config file stored in /Users/{home}/Library/Preferences/{project-name}
+const config = new Conf();
+
+function auth() {
+  return new Promise((resolve, reject) => {
+    inquirer.prompt([
+        {
+          type: 'input',
+          message: 'Enter your Facebook username',
+          name: 'username'
+        },
+        {
+          type: 'password',
+          message: 'Enter your Facebook password',
+          name: 'password'
+        }
+    ]).then(function (answers) {
+      var answer = JSON.stringify(answers);
+      config.set(answers);
+      resolve(true);
+    }).catch(err => reject(err));
+  });
+}
+
+const spotibot = async function spotibot(inputs, flags) {
+
 	var Queue = [];
-	console.log(configFile);
 
-	// get information from path to config file
-	try {
-		var configJSON = JSON.parse(require('fs').readFileSync(configFile, 'utf8'));
-	}
-	catch(err) {
-		console.log(chalk.red(`
-	Oops! That wasn't a valid config path. Try again please!
-
-	See https://github.com/kabirvirji/spotibot for more information
-	`))
-		return
-	}
+	init();
 
 	async function listenFacebook(err, message) {
 		var { body } = message;
@@ -45,20 +59,37 @@ var checkStatus = setInterval(function() {
 }, 
 1000);
 
-async function init() {
-  await initSpotify();
-  api = await loginToFacebook();
-  api.listen(listenFacebook);
-}
-
-function loginToFacebook() {
+async function loginToFacebook() {
   return new Promise((resolve, reject) => {
-    login({ email: configJSON.username, password: configJSON.password }, (err, api) => {
+    login({ email: config.get('username'), password: config.get('password') }, (err, api) => {
       if (err) reject(err);
       resolve(api);
     })
   });
 }
+
+async function init() {
+  api = await loginToFacebook();
+  api.listen(listenFacebook);
+}
+
+/*
+To stop those logging messages
+
+api.setOptions({
+    logLevel: "silent"
+});
+*/
+
+
+
+// login({email: configJSON.username, password: configJSON.password}, function callback (err, api) {
+//     if(err) return console.error(err);
+//	   Hardcoded this message id so maybe that's why I got all the messages
+//     var yourID = 1626794548;
+//     var msg = {body: "Hey! My name is Spotify Bot and I'm here to help you control your music! To play a song tell me to \"play <songname>\". To queue a song (add it to up next) tell me to \"queue <songname>\". Have fun 🎵"};
+//     api.sendMessage(msg, yourID);
+// });
 
 
 }
@@ -79,4 +110,13 @@ const cli = meow(chalk.cyan(`
 }, [""]
 );
 
+(async () => {
+
+if (config.get('username') === undefined || config.get('bearer') === undefined) {
+	let authorization = await auth();
+}
 spotibot(cli.input[0], cli.flags);
+
+})()
+
+
