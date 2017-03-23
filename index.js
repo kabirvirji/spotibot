@@ -17,13 +17,18 @@ function auth() {
     inquirer.prompt([
         {
           type: 'input',
-          message: 'Enter your Facebook username',
+          message: 'Enter the bot\'s Facebook username',
           name: 'username'
         },
         {
           type: 'password',
-          message: 'Enter your Facebook password',
+          message: 'Enter the bot\'s Facebook password',
           name: 'password'
+        },
+        {
+          type: 'input',
+          message: 'Enter YOUR Facebook ID (https://github.com/kabirvirji/spotibot for more information)',
+          name: 'id'
         }
     ]).then(function (answers) {
       var answer = JSON.stringify(answers);
@@ -62,8 +67,11 @@ var checkStatus = setInterval(function() {
 async function loginToFacebook() {
   return new Promise((resolve, reject) => {
     login({ email: config.get('username'), password: config.get('password') }, (err, api) => {
-      if (err) reject(err);
-      resolve(api);
+      if (err) {
+      	//config.clear();
+      	reject(err);
+      	resolve(api);
+  	}
     })
   });
 }
@@ -83,13 +91,16 @@ api.setOptions({
 
 
 
-// login({email: configJSON.username, password: configJSON.password}, function callback (err, api) {
-//     if(err) return console.error(err);
-//	   Hardcoded this message id so maybe that's why I got all the messages
-//     var yourID = 1626794548;
-//     var msg = {body: "Hey! My name is Spotify Bot and I'm here to help you control your music! To play a song tell me to \"play <songname>\". To queue a song (add it to up next) tell me to \"queue <songname>\". Have fun 🎵"};
-//     api.sendMessage(msg, yourID);
-// });
+login({email: config.get('username'), password: config.get('password')}, function callback (err, api) {
+    if(err) return console.error(err);
+	   //Hardcoded this message id so maybe that's why I got all the messages
+    var yourID = config.get('id');//1626794548;1626794548;100014215535982
+    // can have the user enter their id and use it here, to customize the bot
+    console.log('send messages');
+    //var yourID = api.threadID; 
+    var msg = {body: "Hey! My name is Spotify Bot and I'm here to help you control your music! To play a song tell me to \"play <songname>\". To queue a song (add it to up next) tell me to \"queue <songname>\". Have fun 🎵"};
+    api.sendMessage(msg, yourID);
+});
 
 
 }
