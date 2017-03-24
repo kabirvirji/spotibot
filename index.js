@@ -39,27 +39,12 @@ function auth() {
   });
 }
 
-  async function listenFacebook(err, message) {
-    var { body } = message;
-
-    console.log(body);
-    // remove any caps
-    var body = body.toLowerCase();
-
-    spotifyApi = new SpotifyWebApi();
-
-    // api calls
-
-    console.log('waiting for fb');
-
-
-  }
-
 const spotibot = async function spotibot(inputs, flags) {
 
   init();
 
 	var Queue = [];
+  
 // this function should only be executed when the user sends a message to PLAY a song ???
 
     var checkStatus = setInterval( async function() {
@@ -84,17 +69,6 @@ api.setOptions({
 
 // need to wait to be logged in before interval function starts
 
-// login({email: config.get('username'), password: config.get('password')}, function callback (err, api) {
-//     if(err) {
-//       console.log('Wrong thread id please try again');
-//       return
-//     }
-//     var yourID = config.get('id'); // my id: 1626794548 spotibot id: 100014215535982
-//     console.log(chalk.magenta('Sending initial message ...'));
-//     var msg = {body: "Hey! My name is Spotify Bot and I'm here to help you control your music! To play a song tell me to \"@spotify play <songname>\". To queue a song (add it to up next) tell me to \"@spotify queue <songname>\". Have fun 🎵"};
-//     api.sendMessage(msg, yourID);
-// });
-
 login({email: config.get('username'), password: config.get('password')}, (err, api) => {
     if(err) return console.error(err);
 
@@ -103,15 +77,38 @@ login({email: config.get('username'), password: config.get('password')}, (err, a
         logLevel: "silent"
     });
 
-    api.listen((err, message) => {
+    api.listen( (err, message) => {
         if(err) return console.error(err);
 
-        // Ignore empty messages (photos etc.)
-        if (message.body.indexOf('play') > -1 && message.body.indexOf('@spotify') > -1) {
-            api.sendMessage("Playing songname", message.threadID);
-            console.log(message.body);
+        spotifyApi = new SpotifyWebApi();
+
+        if (message.body !== undefined){
+
+
+
+
+          if (message.body.indexOf('play') > -1 && message.body.indexOf('@spotify') > -1) {
+
+            let songname = message.body.slice(14);
+            let songToSearch = message.body.toLowerCase();
+            songToSearch = message.body.slice(14);
+            const searchResults = await spotifyApi.searchTracks(songToSearch);
+            if (searchResults.body.tracks.items[0] != null) {
+              spotify.playTrack(searchResults.body.tracks.items[0].uri, function(){
+                  if(err) return console.error(err);
+              });
+
+            }
+
+            api.sendMessage(`Playing ${songname}`, message.threadID);
+            console.log(chalk.green(`Playing ${songname}`));
+
+          }
+
+
 
         }
+
     });
 });
 
