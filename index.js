@@ -69,7 +69,7 @@ api.setOptions({
 
 // need to wait to be logged in before interval function starts
 
-login({email: config.get('username'), password: config.get('password')}, (err, api) => {
+login({email: config.get('username'), password: config.get('password')}, async (err, api) => {
     if(err) return console.error(err);
 
     api.setOptions({
@@ -77,10 +77,10 @@ login({email: config.get('username'), password: config.get('password')}, (err, a
         logLevel: "silent"
     });
 
-    api.listen( (err, message) => {
+    api.listen( async (err, message) => {
         if(err) return console.error(err);
 
-        spotifyApi = new SpotifyWebApi();
+        let spotifyApi = new SpotifyWebApi();
 
         if (message.body !== undefined){
 
