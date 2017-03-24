@@ -7,6 +7,7 @@ const meow = require('meow');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const Conf = require('conf');
+var spotify = require('spotify-node-applescript');
 
 
 // config file stored in /Users/{home}/Library/Preferences/{project-name}
@@ -38,40 +39,92 @@ function auth() {
   });
 }
 
+  async function listenFacebook(err, message) {
+    var { body } = message;
+
+    console.log(body);
+    // remove any caps
+    var body = body.toLowerCase();
+
+    spotifyApi = new SpotifyWebApi();
+
+    // api calls
+
+    console.log('waiting for fb');
+
+
+  }
+
 const spotibot = async function spotibot(inputs, flags) {
 
+  init();
+
 	var Queue = [];
+// this function should only be executed when the user sends a message to PLAY a song ???
 
-	init();
+    var checkStatus = setInterval( async function() {
 
-	async function listenFacebook(err, message) {
-		var { body } = message;
-		// remove any caps
-		var body = body.toLowerCase();
+    	// get time and consistantly check if curr-1 == actual
+    	// need two get spotify here
 
-		// api calls
-		console.log('waiting for fb');
+      // check position every second and play next song in queue
 
-
-	}
+    	console.log(chalk.cyan('interval function'));
 
 
-var checkStatus = setInterval(function() {
+    }, 
+    1000);
+/*
+To stop those logging messages
 
-	// get time and consistantly check if curr-1 == actual
-	// need two get spotify here
-	console.log('interval function');
-}, 
-1000);
+api.setOptions({
+    logLevel: "silent"
+});
+*/
+
+// need to wait to be logged in before interval function starts
+
+// login({email: config.get('username'), password: config.get('password')}, function callback (err, api) {
+//     if(err) {
+//       console.log('Wrong thread id please try again');
+//       return
+//     }
+//     var yourID = config.get('id'); // my id: 1626794548 spotibot id: 100014215535982
+//     console.log(chalk.magenta('Sending initial message ...'));
+//     var msg = {body: "Hey! My name is Spotify Bot and I'm here to help you control your music! To play a song tell me to \"@spotify play <songname>\". To queue a song (add it to up next) tell me to \"@spotify queue <songname>\". Have fun 🎵"};
+//     api.sendMessage(msg, yourID);
+// });
+
+login({email: config.get('username'), password: config.get('password')}, (err, api) => {
+    if(err) return console.error(err);
+
+    api.setOptions({
+        selfListen: true,
+        logLevel: "silent"
+    });
+
+    api.listen((err, message) => {
+        if(err) return console.error(err);
+
+        // Ignore empty messages (photos etc.)
+        if (message.body.indexOf('play') > -1 && message.body.indexOf('@spotify') > -1) {
+            api.sendMessage("Playing songname", message.threadID);
+            console.log(message.body);
+
+        }
+    });
+});
+
+}
 
 async function loginToFacebook() {
   return new Promise((resolve, reject) => {
     login({ email: config.get('username'), password: config.get('password') }, (err, api) => {
       if (err) {
-      	//config.clear();
-      	reject(err);
-      	resolve(api);
-  	}
+        reject(err);
+        resolve(api);
+        console.log('wrong username or password');
+    }
     })
   });
 }
@@ -81,36 +134,17 @@ async function init() {
   api.listen(listenFacebook);
 }
 
-/*
-To stop those logging messages
 
-api.setOptions({
-    logLevel: "silent"
-});
-*/
-
-
-
-login({email: config.get('username'), password: config.get('password')}, function callback (err, api) {
-    if(err) return console.error(err);
-	   //Hardcoded this message id so maybe that's why I got all the messages
-    var yourID = config.get('id');//1626794548;1626794548;100014215535982
-    // can have the user enter their id and use it here, to customize the bot
-    console.log('send messages');
-    //var yourID = api.threadID; 
-    var msg = {body: "Hey! My name is Spotify Bot and I'm here to help you control your music! To play a song tell me to \"play <songname>\". To queue a song (add it to up next) tell me to \"queue <songname>\". Have fun 🎵"};
-    api.sendMessage(msg, yourID);
-});
-
-
-}
 
 const cli = meow(chalk.cyan(`
     Usage
-      $ spotibot --config [-c] /path/to/config.json
+      $ spotibot
 
     Example
-      $ singlespotify -c /Users/kabirvirji/config.json
+      $ singlespotify
+      Enter your bot's Facebook username: mybot@gmail.com
+      Enter your bot's Facebook password: **********
+      Enter YOUR user id: 1301312
 
     For more information visit https://github.com/kabirvirji/spotibot
 
@@ -127,6 +161,7 @@ if (config.get('username') === undefined || config.get('bearer') === undefined) 
 	let authorization = await auth();
 }
 spotibot(cli.input[0], cli.flags);
+
 
 })()
 
