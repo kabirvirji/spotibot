@@ -38,7 +38,7 @@ const spotibot = async function spotibot(inputs, flags) {
 
   init();
   var totalTime = 0;
-	var queue_array = [];
+  var queue_array = [];
   
 // this function should only be executed when the user sends a message to PLAY a song ???
 
@@ -76,6 +76,7 @@ login({email: config.get('username'), password: config.get('password')}, async (
             const searchResults = await spotifyApi.searchTracks(songToSearch);
             if (searchResults.body.tracks.items[0] != null) {
               totalTime = searchResults.body.tracks.items[0].duration_ms;
+              console.log(`total time: ${totalTime}`)
               spotify.playTrack(searchResults.body.tracks.items[0].uri, function(){
                   if(err) return console.error(err);
               });
@@ -105,8 +106,6 @@ login({email: config.get('username'), password: config.get('password')}, async (
 
     });
 
-});
-
 
     var checkStatus = setInterval( async function() {
 
@@ -123,9 +122,21 @@ login({email: config.get('username'), password: config.get('password')}, async (
             state: 'playing'
         }
         */
-        console.log(state.position);
-        if ((state.position*1000) === totalTime-1){
+        // console.log(`Total time: ${totalTime}`);
+        // console.log(typeof state.position);
+        // console.log(state.position * 1000);
+        // console.log(totalTime/1000);
+        if (Math.ceil(state.position) === 0 && state.state === 'paused'){
           console.log("song done");
+          console.log(queue_array);
+          if (queue_array.length >= 1){
+              spotify.playTrack(queue_array[0], function(){
+                  if(err) return console.error(err);
+              });
+              queue_array.shift();
+              console.log(queue_array);
+          }
+
         }
 
         // when search for song need to the length of it
@@ -134,6 +145,11 @@ login({email: config.get('username'), password: config.get('password')}, async (
 
     }, 
     1000);
+
+});
+
+
+
 
 }
 
