@@ -18,18 +18,13 @@ function auth() {
     inquirer.prompt([
         {
           type: 'input',
-          message: 'Enter the bot\'s Facebook username',
+          message: 'Enter your Facebook username',
           name: 'username'
         },
         {
           type: 'password',
-          message: 'Enter the bot\'s Facebook password',
+          message: 'Enter your Facebook password',
           name: 'password'
-        },
-        {
-          type: 'input',
-          message: 'Enter YOUR Facebook ID (https://github.com/kabirvirji/spotibot for more information)',
-          name: 'id'
         }
     ]).then(function (answers) {
       var answer = JSON.stringify(answers);
@@ -42,23 +37,12 @@ function auth() {
 const spotibot = async function spotibot(inputs, flags) {
 
   init();
-
-	var Queue = [];
+  var totalTime = 0;
+	var queue_array = [];
   
 // this function should only be executed when the user sends a message to PLAY a song ???
 
-    var checkStatus = setInterval( async function() {
 
-    	// get time and consistantly check if curr-1 == actual
-    	// need two get spotify here
-
-      // check position every second and play next song in queue
-
-    	console.log(chalk.cyan('interval function'));
-
-
-    }, 
-    1000);
 /*
 To stop those logging messages
 
@@ -84,9 +68,6 @@ login({email: config.get('username'), password: config.get('password')}, async (
 
         if (message.body !== undefined){
 
-
-
-
           if (message.body.indexOf('play') > -1 && message.body.indexOf('@spotify') > -1) {
 
             let songname = message.body.slice(14);
@@ -94,6 +75,7 @@ login({email: config.get('username'), password: config.get('password')}, async (
             songToSearch = message.body.slice(14);
             const searchResults = await spotifyApi.searchTracks(songToSearch);
             if (searchResults.body.tracks.items[0] != null) {
+              totalTime = searchResults.body.tracks.items[0].duration_ms;
               spotify.playTrack(searchResults.body.tracks.items[0].uri, function(){
                   if(err) return console.error(err);
               });
@@ -105,12 +87,53 @@ login({email: config.get('username'), password: config.get('password')}, async (
 
           }
 
+          if (message.body.indexOf('queue') > -1 && message.body.indexOf('@spotify') > -1){
+
+            const songToSearchforQueue = message.body.slice(14); // takes just the song name eg. "queue songname" will just take songname
+            const searchResultsforQueue = await spotifyApi.searchTracks(songToSearchforQueue); // search results like before
+            const songToQueue = searchResultsforQueue.body.tracks.items[0].uri; // index at URI instread of name like before
+            if (searchResultsforQueue.body.tracks.items[0] != null) {
+                queue_array.push(songToQueue);
+                console.log(queue_array);
+            }
+
+          }
+
 
 
         }
 
     });
+
 });
+
+
+    var checkStatus = setInterval( async function() {
+
+      // get time and consistantly check if curr-1 == actual
+      // need two get spotify here
+
+      // check position every second and play next song in queue
+
+      spotify.getState(function(err, state){
+        /*
+        state = {
+            volume: 99,
+            position: 232,
+            state: 'playing'
+        }
+        */
+        console.log(state.position);
+        if ((state.position*1000) === totalTime-1){
+          console.log("song done");
+        }
+
+        // when search for song need to the length of it
+      });
+
+
+    }, 
+    1000);
 
 }
 
