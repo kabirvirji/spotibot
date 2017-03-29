@@ -83,8 +83,8 @@ login({email: config.get('username'), password: config.get('password')}, async (
 
             }
 
-            api.sendMessage(`Playing ${songname}`, message.threadID);
-            console.log(chalk.green(`Playing ${songname}`));
+            api.sendMessage(`Playing ${songname} 🎵`, message.threadID);
+            console.log(chalk.green(`spotibot is currently playing ${songname}`));
 
           }
 
@@ -99,8 +99,6 @@ login({email: config.get('username'), password: config.get('password')}, async (
             }
 
           }
-
-
 
         }
 
@@ -147,6 +145,12 @@ login({email: config.get('username'), password: config.get('password')}, async (
     1000);
 
 });
+
+          spotify.getTrack(function(err, track){
+            const name = track.name;
+            const artist = track.artist;
+            console.log(`spotibot currently playing ${name} by ${artist}`);
+            });
 
 
 
