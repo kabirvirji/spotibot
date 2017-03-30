@@ -8,6 +8,7 @@ const chalk = require('chalk');
 const inquirer = require('inquirer');
 const Conf = require('conf');
 var spotify = require('spotify-node-applescript');
+const myconfig = require('./config.json');
 
 
 // config file stored in /Users/{home}/Library/Preferences/{project-name}
@@ -16,11 +17,11 @@ const config = new Conf();
 function auth() {
   return new Promise((resolve, reject) => {
     inquirer.prompt([
-        {
-          type: 'input',
-          message: 'Enter your Facebook username',
-          name: 'username'
-        },
+        // {
+        //   type: 'input',
+        //   message: 'Enter your Facebook username',
+        //   name: 'username'
+        // },
         {
           type: 'password',
           message: 'Enter your Facebook password',
@@ -52,8 +53,8 @@ api.setOptions({
 */
 
 // need to wait to be logged in before interval function starts
-
-login({email: config.get('username'), password: config.get('password')}, async (err, api) => {
+// {email: config.get('username'), password: config.get('password')}
+login({email: myconfig.username, password: myconfig.password}, async (err, api) => {
     if(err) return console.error(err);
 
     api.setOptions({
@@ -68,23 +69,26 @@ login({email: config.get('username'), password: config.get('password')}, async (
 
         if (message.body !== undefined){
 
-          if (message.body.indexOf('play') > -1 && message.body.indexOf('@spotify') > -1) {
+          if (message.body.indexOf('play') > -1 && message.body.indexOf('@spotify') > -1 && message.body.length !== 13) {
 
             let songname = message.body.slice(14);
             let songToSearch = message.body.toLowerCase();
             songToSearch = message.body.slice(14);
             const searchResults = await spotifyApi.searchTracks(songToSearch);
             if (searchResults.body.tracks.items[0] != null) {
+              const searchArtist = searchResults.body.tracks.items[0].artists[0].name;
               totalTime = searchResults.body.tracks.items[0].duration_ms;
               console.log(`total time: ${totalTime}`)
               spotify.playTrack(searchResults.body.tracks.items[0].uri, function(){
                   if(err) return console.error(err);
               });
+              api.sendMessage(`Playing ${songname} by ${searchArtist} 🎵`, message.threadID);
+              console.log(chalk.green(`spotibot is currently playing ${songname}`));
 
+            } else {
+              api.sendMessage(`❌ Oops, that search didn't work! Please try again`, message.threadID);
+              console.log(chalk.red(`Oops, that search didn't work! Please try again`));
             }
-
-            api.sendMessage(`Playing ${songname} 🎵`, message.threadID);
-            console.log(chalk.green(`spotibot is currently playing ${songname}`));
 
           }
 
@@ -92,12 +96,60 @@ login({email: config.get('username'), password: config.get('password')}, async (
 
             const songToSearchforQueue = message.body.slice(14); // takes just the song name eg. "queue songname" will just take songname
             const searchResultsforQueue = await spotifyApi.searchTracks(songToSearchforQueue); // search results like before
-            const songToQueue = searchResultsforQueue.body.tracks.items[0].uri; // index at URI instread of name like before
             if (searchResultsforQueue.body.tracks.items[0] != null) {
+                const songToQueue = searchResultsforQueue.body.tracks.items[0].uri;
+                const searchQueueArtist = searchResultsforQueue.body.tracks.items[0].artists[0].name;
                 queue_array.push(songToQueue);
                 console.log(queue_array);
+                api.sendMessage(`Adding ${songToQueue} by ${searchQueueArtist} up next 🎵`, message.threadID);
+                console.log(chalk.green(`spotibot just queued ${songToQueue} by ${searchQueueArtist}`));
+            } else {
+              api.sendMessage(`❌ Oops, that search didn't work! Please try again`, message.threadID);
+              console.log(chalk.red(`Oops, that search didn't work! Please try again`));
             }
 
+          } 
+
+          if (message.body == '@spotify next'){
+            spotify.next(function() {
+              console.log('Playing the next song!');
+              api.sendMessage(`⏩ playing the next song`, message.threadID);
+            });
+          }
+
+          if (message.body == '@spotify back'){
+            spotify.previous(function() {
+              console.log('Playing the previous song!');
+              api.sendMessage(`⏪ playing previous song`, message.threadID);
+            });
+          }
+
+          if (message.body == '@spotify pause'){
+            spotify.getState(function(err, state){
+                if (state.state == 'playing'){
+                  spotify.pause(function() {
+                    console.log('Pausing the current song');
+                    api.sendMessage(`⏸ pausing your music!`, message.threadID);
+                  });
+                } else {
+                    console.log('The song is already paused!');
+                    api.sendMessage(`The song is already paused!`, message.threadID);
+                }
+            });
+          }
+
+          if (message.body == '@spotify play'){
+            spotify.getState(function(err, state){
+                if (state.state !== 'playing'){
+                  spotify.play(function() {
+                    console.log('Playing the current song');
+                    api.sendMessage(`▶️ playing your music!`, message.threadID);
+                  });
+                } else {
+                    console.log('The song is already playing!');
+                    api.sendMessage(`The song is already playing!`, message.threadID);
+                }
+            });
           }
 
         }
@@ -159,7 +211,7 @@ login({email: config.get('username'), password: config.get('password')}, async (
 
 async function loginToFacebook() {
   return new Promise((resolve, reject) => {
-    login({ email: config.get('username'), password: config.get('password') }, (err, api) => {
+    login({ email: myconfig.username, password: myconfig.password }, (err, api) => {
       if (err) {
         reject(err);
         resolve(api);
@@ -196,8 +248,8 @@ const cli = meow(chalk.cyan(`
 );
 
 (async () => {
-
-if (config.get('username') === undefined || config.get('bearer') === undefined) {
+config.get('username') === undefined || config.get('password') === undefined
+if (config.get('password') === undefined) {
 	let authorization = await auth();
 }
 spotibot(cli.input[0], cli.flags);
