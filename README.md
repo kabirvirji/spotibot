@@ -7,4 +7,6 @@ Might need to start playing music manually first
 Open Spotify Desktop app
 # native settings to test
 Turn on autoplay to keep the music going
+# TODO
+- [ ] Need to await login before checking what song is playing ie if song is playing before user runs script
 

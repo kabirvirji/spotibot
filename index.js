@@ -8,8 +8,8 @@ const chalk = require('chalk');
 const inquirer = require('inquirer');
 const Conf = require('conf');
 var spotify = require('spotify-node-applescript');
+const got = require('got');
 const myconfig = require('./config.json');
-
 
 // config file stored in /Users/{home}/Library/Preferences/{project-name}
 const config = new Conf();
@@ -19,13 +19,23 @@ function auth() {
     inquirer.prompt([
         // {
         //   type: 'input',
-        //   message: 'Enter your Facebook username',
+        //   message: 'Facebook username',
         //   name: 'username'
         // },
+        // {
+        //   type: 'password',
+        //   message: 'Facebook password',
+        //   name: 'password'
+        // },
+        {
+          type: 'input',
+          message: 'Spotify username (optional)',
+          name: 'SpotifyUsername'
+        },
         {
           type: 'password',
-          message: 'Enter your Facebook password',
-          name: 'password'
+          message: 'Spotify Bearer token (optional)',
+          name: 'bearer'
         }
     ]).then(function (answers) {
       var answer = JSON.stringify(answers);
@@ -40,19 +50,7 @@ const spotibot = async function spotibot(inputs, flags) {
   init();
   var totalTime = 0;
   var queue_array = [];
-  
-// this function should only be executed when the user sends a message to PLAY a song ???
 
-
-/*
-To stop those logging messages
-
-api.setOptions({
-    logLevel: "silent"
-});
-*/
-
-// need to wait to be logged in before interval function starts
 // {email: config.get('username'), password: config.get('password')}
 login({email: myconfig.username, password: myconfig.password}, async (err, api) => {
     if(err) return console.error(err);
@@ -152,6 +150,49 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             });
           }
 
+          if (message.body.indexOf('@spotify play playlist') > -1) {
+
+            // get users playlists using username and bearer token
+            const spotifyUsername = config.get('SpotifyUsername');
+            const spotifyBearer = config.get('bearer');
+            // if they didn't provide either ask them again -> send fb message to check terminal
+            // if they are invalid ask them again -> send fb message to check terminal
+
+            // with user playlists search for whatever comes after @spotify play playlist <playlistname>
+            const playlistToSearch = message.body.slice(22);
+            console.log(playlistToSearch);
+
+            /*
+            curl -X GET 
+            "https://api.spotify.com/v1/users/kabirvirji/playlists" 
+            -H "Accept: application/json" 
+            -H "Authorization: Bearer BQB1uyjiIsPds55VybLq_1FlbZ_1xRr28fmqBGAwqm"
+            */
+
+            // whatever.playlistname
+            // get all playlist tracks with tracks api call given in the search
+            // queue all those tracks
+
+          }
+
+          var options = {
+            json: true, 
+            headers: {
+              'Authorization' : `Bearer ${config.get('bearer')}`,
+              'Accept' : 'application/json'
+            }
+          };
+
+          got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists`, options)
+            .then(response => {
+
+              console.log(response.body);
+
+            })
+            .catch(error => {
+              console.log(error.response.body);
+            });
+
         }
 
     });
@@ -159,23 +200,8 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
 
     var checkStatus = setInterval( async function() {
 
-      // get time and consistantly check if curr-1 == actual
-      // need two get spotify here
-
-      // check position every second and play next song in queue
-
       spotify.getState(function(err, state){
-        /*
-        state = {
-            volume: 99,
-            position: 232,
-            state: 'playing'
-        }
-        */
-        // console.log(`Total time: ${totalTime}`);
-        // console.log(typeof state.position);
-        // console.log(state.position * 1000);
-        // console.log(totalTime/1000);
+
         if (Math.ceil(state.position) === 0 && state.state === 'paused'){
           console.log("song done");
           console.log(queue_array);
@@ -186,27 +212,17 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
               queue_array.shift();
               console.log(queue_array);
           }
-
         }
-
-        // when search for song need to the length of it
       });
-
-
     }, 
     1000);
 
 });
-
-          spotify.getTrack(function(err, track){
-            const name = track.name;
-            const artist = track.artist;
-            console.log(`spotibot currently playing ${name} by ${artist}`);
-            });
-
-
-
-
+    spotify.getTrack(function(err, track){
+      const name = track.name;
+      const artist = track.artist;
+      console.log(`spotibot currently playing ${name} by ${artist}`);
+      });
 }
 
 async function loginToFacebook() {
@@ -226,17 +242,16 @@ async function init() {
   api.listen(listenFacebook);
 }
 
-
-
 const cli = meow(chalk.cyan(`
     Usage
       $ spotibot
 
     Example
       $ singlespotify
-      Enter your bot's Facebook username: mybot@gmail.com
-      Enter your bot's Facebook password: **********
-      Enter YOUR user id: 1301312
+      Facebook username: kabirvirji@gmail.com
+      Facebook password: **********
+      Spotify username (optional): kabirvirji
+      Spotify bearer (optional): ***********************************
 
     For more information visit https://github.com/kabirvirji/spotibot
 
@@ -248,12 +263,11 @@ const cli = meow(chalk.cyan(`
 );
 
 (async () => {
-config.get('username') === undefined || config.get('password') === undefined
-if (config.get('password') === undefined) {
+// config.get('username') === undefined || config.get('password') === undefined
+if (config.get('bearer') === undefined || config.get('SpotifyUsername') === undefined) {
 	let authorization = await auth();
 }
 spotibot(cli.input[0], cli.flags);
-
 
 })()
 
