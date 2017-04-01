@@ -182,7 +182,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             }
           };
           console.log(config.get('SpotifyUsername'));
-          got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists`, options)
+          got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists?limit=50`, options)
             .then(response => {
 
               //console.log(response.body.items[0].name);
@@ -194,13 +194,24 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
                 //console.log(playlistNames[i]);
                 if (playlistNames[i].name == playlistToSearch){
                   console.log('found playlist');
-                  console.log(playlistNames[i].name);
+                  const foundPlaylist = playlistNames[i].name;
+                  console.log(foundPlaylist);
+                  const playlistURI = playlistNames[i].id;
+                  console.log(playlistURI);
 
                   break;
+
                 } else {
                   console.log('not it');
                 }
               }
+
+              got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/${playlistURI}/tracks`, options)
+                .then(response => {
+
+                  console.log(response);
+
+                })
 
             })
 
