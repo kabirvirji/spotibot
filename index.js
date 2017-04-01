@@ -67,7 +67,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
 
         if (message.body !== undefined){
 
-          if (message.body.indexOf('play') > -1 && message.body.indexOf('@spotify') > -1 && message.body.length !== 13) {
+          if (message.body.indexOf('play ') > -1 && message.body.indexOf('@spotify') > -1 && message.body.length !== 13) {
 
             let songname = message.body.slice(14);
             let songToSearch = message.body.toLowerCase();
@@ -150,7 +150,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             });
           }
 
-          if (message.body.indexOf('@spotify play playlist') > -1) {
+          if (message.body.indexOf('@spotify playlist') > -1) {
 
             // get users playlists using username and bearer token
             const spotifyUsername = config.get('SpotifyUsername');
@@ -159,7 +159,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             // if they are invalid ask them again -> send fb message to check terminal
 
             // with user playlists search for whatever comes after @spotify play playlist <playlistname>
-            const playlistToSearch = message.body.slice(22);
+            const playlistToSearch = message.body.slice(18);
             console.log(playlistToSearch);
 
             /*
@@ -173,7 +173,6 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             // get all playlist tracks with tracks api call given in the search
             // queue all those tracks
 
-          }
 
           var options = {
             json: true, 
@@ -182,16 +181,32 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
               'Accept' : 'application/json'
             }
           };
-
+          console.log(config.get('SpotifyUsername'));
           got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists`, options)
             .then(response => {
 
-              console.log(response.body);
+              //console.log(response.body.items[0].name);
+              var size = response.body.items.length;
+              console.log(`response size ${size}`)
+              const playlistNames = response.body.items;
+
+              for (var i = 0;i<size;i++){
+                //console.log(playlistNames[i]);
+                if (playlistNames[i].name == playlistToSearch){
+                  console.log('found playlist');
+                  console.log(playlistNames[i].name);
+
+                  break;
+                } else {
+                  console.log('not it');
+                }
+              }
 
             })
-            .catch(error => {
-              console.log(error.response.body);
-            });
+
+          }
+
+
 
         }
 
