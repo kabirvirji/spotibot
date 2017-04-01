@@ -11,4 +11,5 @@ Bearer tokens expire after an hour
 Turn on autoplay to keep the music going
 # TODO
 - [ ] Need to await login before checking what song is playing ie if song is playing before user runs script
+- [ ] Error checks for http fails, expired bearer token (doesnt work suggest new token or invalid username)
 

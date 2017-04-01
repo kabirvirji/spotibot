@@ -182,6 +182,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             }
           };
           console.log(config.get('SpotifyUsername'));
+          console.log(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists?limit=50`);
           got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists?limit=50`, options)
             .then(response => {
 
@@ -189,14 +190,14 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
               var size = response.body.items.length;
               console.log(`response size ${size}`)
               const playlistNames = response.body.items;
-
+              let playlistURI;
               for (var i = 0;i<size;i++){
                 //console.log(playlistNames[i]);
                 if (playlistNames[i].name == playlistToSearch){
                   console.log('found playlist');
                   const foundPlaylist = playlistNames[i].name;
                   console.log(foundPlaylist);
-                  const playlistURI = playlistNames[i].id;
+                  playlistURI = playlistNames[i].id;
                   console.log(playlistURI);
 
                   break;
@@ -205,11 +206,16 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
                   console.log('not it');
                 }
               }
-
-              got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/${playlistURI}/tracks`, options)
+              console.log(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/${playlistURI}/tracks`);
+              // this request not working
+              got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists/${playlistURI}/tracks`, options)
                 .then(response => {
 
-                  console.log(response);
+                  const playlistTracksArray = response.body.items;
+                  for (var i = 0; i < playlistTracksArray.length; i++){
+                    queue_array.push(playlistTracksArray[i].track.uri);
+                  }
+                  console.log(queue_array);
 
                 })
 
