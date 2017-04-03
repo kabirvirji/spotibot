@@ -1,7 +1,7 @@
 {
   "name": "spotibot",
   "version": "1.0.0",
-  "description": "A Spotify Messenger bot",
+  "description": "A Spotify Facebook Messenger bot",
   "license": "ISC",
   "main": "index.js",
   "scripts": {
