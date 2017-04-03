@@ -48,7 +48,6 @@ function auth() {
 const spotibot = async function spotibot(inputs, flags) {
 
   init();
-  var totalTime = 0;
   var queue_array = [];
 
 // {email: config.get('username'), password: config.get('password')}
@@ -75,13 +74,15 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             const searchResults = await spotifyApi.searchTracks(songToSearch);
             if (searchResults.body.tracks.items[0] != null) {
               const searchArtist = searchResults.body.tracks.items[0].artists[0].name;
-              totalTime = searchResults.body.tracks.items[0].duration_ms;
-              console.log(`total time: ${totalTime}`)
               spotify.playTrack(searchResults.body.tracks.items[0].uri, function(){
                   if(err) return console.error(err);
               });
-              api.sendMessage(`Playing ${songname} by ${searchArtist} 🎵`, message.threadID);
-              console.log(chalk.green(`spotibot is currently playing ${songname}`));
+              spotify.getTrack(function(err, track){
+                const name = track.name;
+                const artist = track.artist;
+                api.sendMessage(`spotibot currently playing ${name} by ${artist} 🎵`, message.threadID);
+                console.log(chalk.green(`spotibot currently playing ${name} by ${artist}`));
+              });
 
             } else {
               api.sendMessage(`❌ Oops, that search didn't work! Please try again`, message.threadID);
@@ -92,15 +93,14 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
 
           if (message.body.indexOf('queue') > -1 && message.body.indexOf('@spotify') > -1){
 
-            const songToSearchforQueue = message.body.slice(14); // takes just the song name eg. "queue songname" will just take songname
+            const songToSearchforQueue = message.body.slice(15); // takes just the song name eg. "queue songname" will just take songname
             const searchResultsforQueue = await spotifyApi.searchTracks(songToSearchforQueue); // search results like before
             if (searchResultsforQueue.body.tracks.items[0] != null) {
                 const songToQueue = searchResultsforQueue.body.tracks.items[0].uri;
                 const searchQueueArtist = searchResultsforQueue.body.tracks.items[0].artists[0].name;
                 queue_array.push(songToQueue);
-                console.log(queue_array);
-                api.sendMessage(`Adding ${songToQueue} by ${searchQueueArtist} up next 🎵`, message.threadID);
-                console.log(chalk.green(`spotibot just queued ${songToQueue} by ${searchQueueArtist}`));
+                api.sendMessage(`Adding ${songToSearchforQueue} by ${searchQueueArtist} up next 🎵`, message.threadID);
+                console.log(chalk.green(`spotibot just queued ${songToSearchforQueue} by ${searchQueueArtist}`));
             } else {
               api.sendMessage(`❌ Oops, that search didn't work! Please try again`, message.threadID);
               console.log(chalk.red(`Oops, that search didn't work! Please try again`));
@@ -161,18 +161,6 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             // with user playlists search for whatever comes after @spotify play playlist <playlistname>
             const playlistToSearch = message.body.slice(18);
             console.log(playlistToSearch);
-
-            /*
-            curl -X GET 
-            "https://api.spotify.com/v1/users/kabirvirji/playlists" 
-            -H "Accept: application/json" 
-            -H "Authorization: Bearer BQB1uyjiIsPds55VybLq_1FlbZ_1xRr28fmqBGAwqm"
-            */
-
-            // whatever.playlistname
-            // get all playlist tracks with tracks api call given in the search
-            // queue all those tracks
-
 
           var options = {
             json: true, 
@@ -235,14 +223,18 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
       spotify.getState(function(err, state){
 
         if (Math.ceil(state.position) === 0 && state.state === 'paused'){
-          console.log("song done");
-          console.log(queue_array);
           if (queue_array.length >= 1){
               spotify.playTrack(queue_array[0], function(){
                   if(err) return console.error(err);
               });
               queue_array.shift();
-              console.log(queue_array);
+              setTimeout(function () {
+              spotify.getTrack(function(err, track){
+                const name = track.name;
+                const artist = track.artist;
+                console.log(chalk.green(`spotibot currently playing ${name} by ${artist}`));
+                });
+            }, 2000);
           }
         }
       });
@@ -250,11 +242,6 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
     1000);
 
 });
-    spotify.getTrack(function(err, track){
-      const name = track.name;
-      const artist = track.artist;
-      console.log(`spotibot currently playing ${name} by ${artist}`);
-      });
 }
 
 async function loginToFacebook() {

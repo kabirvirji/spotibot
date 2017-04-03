@@ -6,7 +6,7 @@ Need the Spotify desktop app installed and be logged in there <br>
 Might need to start playing music manually first
 Open Spotify Desktop app
 Playlists limit to 50
-Bearer tokens expire after an hour
+Bearer tokens expire after an hour: https://developer.spotify.com/web-api/console/get-playlists/
 # native settings to test
 Turn on autoplay to keep the music going
 # TODO
