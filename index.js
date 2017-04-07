@@ -2,14 +2,12 @@
 'use strict';
 const SpotifyWebApi = require('spotify-web-api-node');
 const login = require('facebook-chat-api');
-const fs = require('fs');
 const meow = require('meow');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const Conf = require('conf');
 var spotify = require('spotify-node-applescript');
 const got = require('got');
-const myconfig = require('./config.json');
 
 // config file stored in /Users/{home}/Library/Preferences/{project-name}
 const config = new Conf();
@@ -17,16 +15,16 @@ const config = new Conf();
 function auth() {
   return new Promise((resolve, reject) => {
     inquirer.prompt([
-        // {
-        //   type: 'input',
-        //   message: 'Facebook username',
-        //   name: 'username'
-        // },
-        // {
-        //   type: 'password',
-        //   message: 'Facebook password',
-        //   name: 'password'
-        // },
+        {
+          type: 'input',
+          message: 'Facebook username',
+          name: 'username'
+        },
+        {
+          type: 'password',
+          message: 'Facebook password',
+          name: 'password'
+        },
         {
           type: 'input',
           message: 'Spotify username (optional)',
@@ -47,25 +45,30 @@ function auth() {
 
 const spotibot = async function spotibot(inputs, flags) {
 
-  init();
   var queue_array = [];
 
-// {email: config.get('username'), password: config.get('password')}
-login({email: myconfig.username, password: myconfig.password}, async (err, api) => {
-    if(err) return console.error(err);
+  login({email: config.get('username'), password: config.get('password')}, async (err, api) => {
+      if(err) {
+        console.log(chalk.red("Wrong username or password"));
+        process.exit();
+      }
+      // Ability to message yourself
+      api.setOptions({
+          selfListen: true,
+          logLevel: "silent"
+      });
 
-    api.setOptions({
-        selfListen: true,
-        logLevel: "silent"
-    });
-
-    api.listen( async (err, message) => {
-        if(err) return console.error(err);
+      api.listen( async (err, message) => {
+          if(err) {
+            console.log(chalk.red("Wrong username or password"));
+            process.exit();
+          }
 
         let spotifyApi = new SpotifyWebApi();
 
         if (message.body !== undefined){
 
+          // @spotibot play <songname>
           if (message.body.indexOf('play ') > -1 && message.body.indexOf('@spotibot') > -1 && message.body.length !== 13) {
 
             let songname = message.body.slice(14);
@@ -83,7 +86,6 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
               console.log(chalk.red(`Oops, that search didn't work! Please try again`));
             }
 
-
             setTimeout(function () { spotify.getTrack(function(err, track){
                 const name = track.name;
                 const artist = track.artist;
@@ -94,6 +96,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
 
           }
 
+          // @spotibot queue <songname>
           if (message.body.indexOf('queue') > -1 && message.body.indexOf('@spotibot') > -1){
 
             const songToSearchforQueue = message.body.slice(15); // takes just the song name eg. "queue songname" will just take songname
@@ -153,86 +156,57 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             });
           }
 
+          // @spotibot playlist <playlist you follow name> 
           if (message.body.indexOf('@spotibot playlist') > -1) {
 
-            // get users playlists using username and bearer token
             const spotifyUsername = config.get('SpotifyUsername');
             const spotifyBearer = config.get('bearer');
-            // if they didn't provide either ask them again -> send fb message to check terminal
-            // if they are invalid ask them again -> send fb message to check terminal
-
-            // with user playlists search for whatever comes after @spotify play playlist <playlistname>
             const playlistToSearch = message.body.slice(19);
-            console.log(playlistToSearch);
-
-          var options = {
-            json: true, 
-            headers: {
-              'Authorization' : `Bearer ${config.get('bearer')}`,
-              'Accept' : 'application/json'
-            }
-          };
-          console.log(config.get('SpotifyUsername'));
-          console.log(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists?limit=50`);
-          got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists?limit=50`, options)
-            .then(response => {
-
-              //console.log(response.body.items[0].name);
-              const size = response.body.items.length;
-              console.log(`response size ${size}`)
-              const playlistNames = response.body.items;
-              let playlistURI;
-              let playlistOwner;
-              console.log(response.body.items[0])
-              for (var i = 0;i<size;i++){
-                //console.log(playlistNames[i]);
-                if (playlistNames[i].name == playlistToSearch){
-                  console.log('found playlist');
-                  const foundPlaylist = playlistNames[i].name;
-                  console.log(foundPlaylist);
-                  playlistURI = playlistNames[i].id;
-                  console.log(playlistURI);
-                  playlistOwner = playlistNames[i].owner.id;
-                  console.log(playlistOwner);
-                  break;
-
-                } else {
-                  console.log('not it');
-                }
+            var options = {
+              json: true, 
+              headers: {
+                'Authorization' : `Bearer ${config.get('bearer')}`,
+                'Accept' : 'application/json'
               }
-              console.log(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/${playlistURI}/tracks`);
-               
-              // response.body.items[0].owner.id
-              got(`https://api.spotify.com/v1/users/${playlistOwner}/playlists/${playlistURI}/tracks`, options)
-                .then(response => {
-
-                  const playlistTracksArray = response.body.items;
-                  for (var i = 0; i < playlistTracksArray.length; i++){
-                    queue_array.push(playlistTracksArray[i].track.uri);
+            };
+            got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists?limit=50`, options)
+              .then(response => {
+                const size = response.body.items.length;
+                const playlistNames = response.body.items;
+                let playlistURI;
+                let playlistOwner;
+                for (var i = 0;i<size;i++){
+                  if (playlistNames[i].name == playlistToSearch){
+                    const foundPlaylist = playlistNames[i].name;
+                    playlistURI = playlistNames[i].id;
+                    playlistOwner = playlistNames[i].owner.id;
+                    break;
                   }
-                  console.log(queue_array);
-                  api.sendMessage(`${playlistToSearch} is ready to go! 🚀`, message.threadID);
+                }
+                got(`https://api.spotify.com/v1/users/${playlistOwner}/playlists/${playlistURI}/tracks`, options)
+                  .then(response => {
+                    const playlistTracksArray = response.body.items;
+                    for (var i = 0; i < playlistTracksArray.length; i++){
+                      queue_array.push(playlistTracksArray[i].track.uri);
+                    }
+                    api.sendMessage(`The playlist "${playlistToSearch}" is ready to go! 🚀`, message.threadID);
 
-                })
-                .catch(error => {
-                  console.log("There was an error with the inner api call")
-                })
-
-            })
-            .catch(error => {
-              console.log("There was an error finding that playlist or with your bearer token")
-            });
-
+                  })
+                  .catch(error => {
+                    console.log("Sorry, that playlist wasn't found! Check your spelling, or move your playlist up on your account. The Spotify API has a 50 playlist limit.")
+                    api.sendMessage(`❌ Oops, that playlist wasn't found!`, message.threadID);
+                  })
+              })
+              .catch(error => {
+                console.log("Wrong Spotify Username or Password. Please make sure you provide them for playlist access")
+                config.clear();
+                process.exit();
+              });
+            }
           }
+      });
 
-
-
-        }
-
-    });
-
-
-    var checkStatus = setInterval( async function() {
+    const checkStatus = setInterval( async function() {
 
       spotify.getState(function(err, state){
 
@@ -258,23 +232,6 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
 });
 }
 
-async function loginToFacebook() {
-  return new Promise((resolve, reject) => {
-    login({ email: myconfig.username, password: myconfig.password }, (err, api) => {
-      if (err) {
-        reject(err);
-        resolve(api);
-        console.log('wrong username or password');
-    }
-    })
-  });
-}
-
-async function init() {
-  api = await loginToFacebook();
-  api.listen(listenFacebook);
-}
-
 const cli = meow(chalk.cyan(`
     Usage
       $ spotibot
@@ -296,12 +253,9 @@ const cli = meow(chalk.cyan(`
 );
 
 (async () => {
-// config.get('username') === undefined || config.get('password') === undefined
-if (config.get('bearer') === undefined || config.get('SpotifyUsername') === undefined) {
+if (config.get('username') === undefined || config.get('password') === undefined) {
 	let authorization = await auth();
 }
 spotibot(cli.input[0], cli.flags);
 
 })()
-
-
