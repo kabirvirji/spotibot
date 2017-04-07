@@ -77,17 +77,20 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
               spotify.playTrack(searchResults.body.tracks.items[0].uri, function(){
                   if(err) return console.error(err);
               });
-              spotify.getTrack(function(err, track){
-                const name = track.name;
-                const artist = track.artist;
-                api.sendMessage(`spotibot currently playing ${name} by ${artist} 🎵`, message.threadID);
-                console.log(chalk.green(`spotibot currently playing ${name} by ${artist}`));
-              });
 
             } else {
               api.sendMessage(`❌ Oops, that search didn't work! Please try again`, message.threadID);
               console.log(chalk.red(`Oops, that search didn't work! Please try again`));
             }
+
+
+            setTimeout(function () { spotify.getTrack(function(err, track){
+                const name = track.name;
+                const artist = track.artist;
+                api.sendMessage(`spotibot currently playing ${name} by ${artist} 🎵`, message.threadID);
+                console.log(chalk.green(`spotibot currently playing ${name} by ${artist}`));
+                });
+          }, 1000);
 
           }
 
