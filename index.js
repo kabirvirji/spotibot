@@ -66,7 +66,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
 
         if (message.body !== undefined){
 
-          if (message.body.indexOf('play ') > -1 && message.body.indexOf('@spotify') > -1 && message.body.length !== 13) {
+          if (message.body.indexOf('play ') > -1 && message.body.indexOf('@spotibot') > -1 && message.body.length !== 13) {
 
             let songname = message.body.slice(14);
             let songToSearch = message.body.toLowerCase();
@@ -94,7 +94,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
 
           }
 
-          if (message.body.indexOf('queue') > -1 && message.body.indexOf('@spotify') > -1){
+          if (message.body.indexOf('queue') > -1 && message.body.indexOf('@spotibot') > -1){
 
             const songToSearchforQueue = message.body.slice(15); // takes just the song name eg. "queue songname" will just take songname
             const searchResultsforQueue = await spotifyApi.searchTracks(songToSearchforQueue); // search results like before
@@ -102,7 +102,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
                 const songToQueue = searchResultsforQueue.body.tracks.items[0].uri;
                 const searchQueueArtist = searchResultsforQueue.body.tracks.items[0].artists[0].name;
                 queue_array.push(songToQueue);
-                api.sendMessage(`Adding ${songToSearchforQueue} by ${searchQueueArtist} up next 🎵`, message.threadID);
+                api.sendMessage(`Adding${songToSearchforQueue} by ${searchQueueArtist} up next 🎵`, message.threadID);
                 console.log(chalk.green(`spotibot just queued ${songToSearchforQueue} by ${searchQueueArtist}`));
             } else {
               api.sendMessage(`❌ Oops, that search didn't work! Please try again`, message.threadID);
@@ -111,49 +111,49 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
 
           } 
 
-          if (message.body == '@spotify next'){
+          if (message.body == '@spotibot next'){
             spotify.next(function() {
-              console.log('Playing the next song!');
+              console.log(chalk.cyan('Playing the next song!'));
               api.sendMessage(`⏩ playing the next song`, message.threadID);
             });
           }
 
-          if (message.body == '@spotify back'){
+          if (message.body == '@spotibot back'){
             spotify.previous(function() {
-              console.log('Playing the previous song!');
+              console.log(chalk.cyan('Playing the previous song!'));
               api.sendMessage(`⏪ playing previous song`, message.threadID);
             });
           }
 
-          if (message.body == '@spotify pause'){
+          if (message.body == '@spotibot pause'){
             spotify.getState(function(err, state){
                 if (state.state == 'playing'){
                   spotify.pause(function() {
-                    console.log('Pausing the current song');
+                    console.log(chalk.cyan('Pausing the current song'));
                     api.sendMessage(`⏸ pausing your music!`, message.threadID);
                   });
                 } else {
-                    console.log('The song is already paused!');
+                    console.log(chalk.cyan('The song is already paused!'));
                     api.sendMessage(`The song is already paused!`, message.threadID);
                 }
             });
           }
 
-          if (message.body == '@spotify play'){
+          if (message.body == '@spotibot play'){
             spotify.getState(function(err, state){
                 if (state.state !== 'playing'){
                   spotify.play(function() {
-                    console.log('Playing the current song');
+                    console.log(chalk.cyan('Playing the current song'));
                     api.sendMessage(`▶️ playing your music!`, message.threadID);
                   });
                 } else {
-                    console.log('The song is already playing!');
+                    console.log(chalk.cyan('The song is already playing!'));
                     api.sendMessage(`The song is already playing!`, message.threadID);
                 }
             });
           }
 
-          if (message.body.indexOf('@spotify playlist') > -1) {
+          if (message.body.indexOf('@spotibot playlist') > -1) {
 
             // get users playlists using username and bearer token
             const spotifyUsername = config.get('SpotifyUsername');
@@ -162,7 +162,7 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             // if they are invalid ask them again -> send fb message to check terminal
 
             // with user playlists search for whatever comes after @spotify play playlist <playlistname>
-            const playlistToSearch = message.body.slice(18);
+            const playlistToSearch = message.body.slice(19);
             console.log(playlistToSearch);
 
           var options = {
@@ -178,10 +178,12 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
             .then(response => {
 
               //console.log(response.body.items[0].name);
-              var size = response.body.items.length;
+              const size = response.body.items.length;
               console.log(`response size ${size}`)
               const playlistNames = response.body.items;
               let playlistURI;
+              let playlistOwner;
+              console.log(response.body.items[0])
               for (var i = 0;i<size;i++){
                 //console.log(playlistNames[i]);
                 if (playlistNames[i].name == playlistToSearch){
@@ -190,7 +192,8 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
                   console.log(foundPlaylist);
                   playlistURI = playlistNames[i].id;
                   console.log(playlistURI);
-
+                  playlistOwner = playlistNames[i].owner.id;
+                  console.log(playlistOwner);
                   break;
 
                 } else {
@@ -198,8 +201,9 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
                 }
               }
               console.log(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/${playlistURI}/tracks`);
-              // this request not working
-              got(`https://api.spotify.com/v1/users/${config.get('SpotifyUsername')}/playlists/${playlistURI}/tracks`, options)
+               
+              // response.body.items[0].owner.id
+              got(`https://api.spotify.com/v1/users/${playlistOwner}/playlists/${playlistURI}/tracks`, options)
                 .then(response => {
 
                   const playlistTracksArray = response.body.items;
@@ -207,10 +211,17 @@ login({email: myconfig.username, password: myconfig.password}, async (err, api) 
                     queue_array.push(playlistTracksArray[i].track.uri);
                   }
                   console.log(queue_array);
+                  api.sendMessage(`${playlistToSearch} is ready to go! 🚀`, message.threadID);
 
+                })
+                .catch(error => {
+                  console.log("There was an error with the inner api call")
                 })
 
             })
+            .catch(error => {
+              console.log("There was an error finding that playlist or with your bearer token")
+            });
 
           }
 
@@ -269,7 +280,7 @@ const cli = meow(chalk.cyan(`
       $ spotibot
 
     Example
-      $ singlespotify
+      $ spotibot
       Facebook username: kabirvirji@gmail.com
       Facebook password: **********
       Spotify username (optional): kabirvirji
