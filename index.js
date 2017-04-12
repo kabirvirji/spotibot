@@ -199,8 +199,11 @@ const spotibot = async function spotibot(inputs, flags) {
               })
               .catch(error => {
                 console.log("Wrong Spotify Username or Password. Please make sure you provide them for playlist access")
+                api.sendMessage(`❌ Something went wrong, please check terminal!`, message.threadID);
                 config.clear();
-                process.exit();
+                setTimeout(function () {
+                  process.exit();
+                }, 2000);
               });
             }
           }
