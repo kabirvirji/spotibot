@@ -81,11 +81,6 @@ const spotibot = async function spotibot(inputs, flags) {
                   if(err) return console.error(err);
               });
 
-            } else {
-              api.sendMessage(`❌ Oops, that search didn't work! Please try again`, message.threadID);
-              console.log(chalk.red(`Oops, that search didn't work! Please try again`));
-            }
-
             setTimeout(function () { spotify.getTrack(function(err, track){
                 const name = track.name;
                 const artist = track.artist;
@@ -93,6 +88,11 @@ const spotibot = async function spotibot(inputs, flags) {
                 console.log(chalk.green(`spotibot currently playing ${name} by ${artist}`));
                 });
           }, 1000);
+
+            } else {
+              api.sendMessage(`❌ Oops, that search didn't work! Please try again`, message.threadID);
+              console.log(chalk.red(`Oops, that search didn't work! Please try again`));
+            }
 
           }
 

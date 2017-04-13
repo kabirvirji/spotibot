@@ -1,4 +1,4 @@
-# spotibot
+# spotibot 🤖
 A Spotify Messenger bot <br>
 For Mac OS <br>
 https://developer.spotify.com/web-api/console/get-playlists/
