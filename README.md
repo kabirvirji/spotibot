@@ -1,6 +1,6 @@
 # spotibot 🤖
-A Spotify Messenger bot <br>
-For Mac OS <br>
+A Spotify Messenger bot <br> can make the bot an image to make larger
+For Mac OS <br> requirments
 https://developer.spotify.com/web-api/console/get-playlists/
 Need the Spotify desktop app installed and be logged in there
 # troubleshooting
