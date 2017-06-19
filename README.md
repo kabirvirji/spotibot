@@ -1,6 +1,4 @@
 # spotibot 🤖
-
-
 A Spotify Messenger bot <br> can make the bot an image to make larger
 For Mac OS <br> requirments
 https://developer.spotify.com/web-api/console/get-playlists/
