@@ -38,6 +38,7 @@ jspm_packages
 
 # Config
 config.json
+info.json
 
 # Mac stuff
 .DS_store

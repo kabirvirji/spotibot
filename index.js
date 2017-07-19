@@ -8,6 +8,7 @@ const inquirer = require('inquirer');
 const Conf = require('conf');
 var spotify = require('spotify-node-applescript');
 const got = require('got');
+const myInformation = require('info.json')
 
 // config file stored in /Users/{home}/Library/Preferences/{project-name}
 const config = new Conf();
@@ -27,12 +28,12 @@ function auth() {
         },
         {
           type: 'input',
-          message: 'Spotify username (optional)',
+          message: 'Spotify username',
           name: 'SpotifyUsername'
         },
         {
           type: 'password',
-          message: 'Spotify Bearer token (optional)',
+          message: 'Spotify Bearer token',
           name: 'bearer'
         }
     ]).then(function (answers) {
@@ -47,7 +48,7 @@ const spotibot = async function spotibot(inputs, flags) {
 
   var queue_array = [];
 
-  login({email: config.get('username'), password: config.get('password')}, async (err, api) => {
+  login({email: myInformation.facebookUsername, password: myInformation.facebookPassword}, async (err, api) => {
       if(err) {
         console.log(chalk.red("Wrong username or password"));
         process.exit();
@@ -243,8 +244,8 @@ const cli = meow(chalk.cyan(`
       $ spotibot
       Facebook username: kabirvirji@gmail.com
       Facebook password: **********
-      Spotify username (optional): kabirvirji
-      Spotify bearer (optional): ***********************************
+      Spotify username: kabirvirji
+      Spotify bearer: ***********************************
 
     For more information visit https://github.com/kabirvirji/spotibot
 
@@ -256,7 +257,7 @@ const cli = meow(chalk.cyan(`
 );
 
 (async () => {
-if (config.get('username') === undefined || config.get('password') === undefined) {
+if (config.get('username') === undefined || config.get('password') === undefined || config.get('SpotifyUsername') === undefined || config.get('bearer') === undefined) {
 	let authorization = await auth();
 }
 spotibot(cli.input[0], cli.flags);
