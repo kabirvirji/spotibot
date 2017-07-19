@@ -18,6 +18,7 @@ Fade in and out
 - [ ] Need to use for npm my version of facebook chat api and pull in recent changes
 - [ ] Add config so ppl don't keep queueing closer by chain smokers thanks @jaypatel for the idea
 - [ ] If bearer tokens are expired (even if provided correctly earlier) then playlist search fails and script exists
+- [ ] Rewrite using API callbacks so it works on any device
 - [ ] Priority Queue
 
 If auth gets annoying could have terminal browser pop up to authenticate user

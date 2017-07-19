@@ -8,7 +8,7 @@ const inquirer = require('inquirer');
 const Conf = require('conf');
 var spotify = require('spotify-node-applescript');
 const got = require('got');
-const myInformation = require('info.json')
+const myInformation = require('./info.json')
 
 // config file stored in /Users/{home}/Library/Preferences/{project-name}
 const config = new Conf();
@@ -71,7 +71,7 @@ const spotibot = async function spotibot(inputs, flags) {
 
           // @spotibot play <songname>
           if (message.body.indexOf('play ') > -1 && message.body.indexOf('@spotibot') > -1 && message.body.length !== 13) {
-
+            console.log('got this far')
             let songname = message.body.slice(14);
             let songToSearch = message.body.toLowerCase();
             songToSearch = message.body.slice(14);
@@ -81,7 +81,8 @@ const spotibot = async function spotibot(inputs, flags) {
               spotify.playTrack(searchResults.body.tracks.items[0].uri, function(){
                   if(err) return console.error(err);
               });
-
+            // Getting a track now requires an API key, so need to do this a different way
+            // Can use GOT with the provided token to search for a track
             setTimeout(function () { spotify.getTrack(function(err, track){
                 const name = track.name;
                 const artist = track.artist;
