@@ -8,7 +8,9 @@ const inquirer = require('inquirer');
 const Conf = require('conf');
 var spotify = require('spotify-node-applescript');
 const got = require('got');
-const myInformation = require('./info.json')
+const myInformation = require('./config.json')
+
+// NEED TO ASK FOR SPOTIFY PASSWORD
 
 // config file stored in /Users/{home}/Library/Preferences/{project-name}
 const config = new Conf();
@@ -74,8 +76,35 @@ const spotibot = async function spotibot(inputs, flags) {
             console.log('got this far')
             let songname = message.body.slice(14);
             let songToSearch = message.body.toLowerCase();
-            songToSearch = message.body.slice(14);
-            const searchResults = await spotifyApi.searchTracks(songToSearch);
+            songToSearch = message.body.slice(15);
+            // replace spaces in songToSearch with "+"
+            const NewsongToSearch = songToSearch.split(' ').join('+');
+            console.log(NewsongToSearch)
+
+            // need to use got for this & official spotify api
+            //const searchResults = await spotifyApi.searchTracks(songToSearch);
+            // https://api.spotify.com/v1/search
+
+            var options = {
+              json: true, 
+              headers: {
+                'Authorization' : `Bearer ${config.get('bearer')}`,
+                'Accept' : 'application/json'
+              }
+            };
+
+            got(`https://api.spotify.com/v1/search?q=${NewsongToSearch}&type=track`, options)
+              .then(response => {
+                console.log(response.body.tracks.items[0]);
+                // can get the URI from the above response
+                // need to identify the device and then play it on the device
+              })
+              .catch(error => {
+                console.log(error.response.body);
+                //=> 'Internal server error ...'
+              });
+
+
             if (searchResults.body.tracks.items[0] != null) {
               const searchArtist = searchResults.body.tracks.items[0].artists[0].name;
               spotify.playTrack(searchResults.body.tracks.items[0].uri, function(){
@@ -214,7 +243,7 @@ const spotibot = async function spotibot(inputs, flags) {
     const checkStatus = setInterval( async function() {
 
       spotify.getState(function(err, state){
-
+        // if spotify isn't open already on mac this breaks
         if (Math.ceil(state.position) === 0 && state.state === 'paused'){
           if (queue_array.length >= 1){
               spotify.playTrack(queue_array[0], function(){
