@@ -6,11 +6,17 @@ const meow = require('meow');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
 const Conf = require('conf');
-var spotify = require('spotify-node-applescript');
+const spotify = require('spotify-node-applescript');
 const got = require('got');
 const myInformation = require('./config.json')
+const Heap = require('mnemonist/heap');
 
-// NEED TO ASK FOR SPOTIFY PASSWORD
+// NEED TO TO ASK FOR FB AND SPOTIFY PASSWORD
+
+// let MaxHeap = require('mnemonist/heap').MaxHeap;
+
+// create new max heap 
+// let heap = new Heap();
 
 // config file stored in /Users/{home}/Library/Preferences/{project-name}
 const config = new Conf();
@@ -73,7 +79,6 @@ const spotibot = async function spotibot(inputs, flags) {
 
           // @spotibot play <songname>
           if (message.body.indexOf('play ') > -1 && message.body.indexOf('@spotibot') > -1 && message.body.length !== 13) {
-            console.log('got this far')
             let songname = message.body.slice(14);
             let songToSearch = message.body.toLowerCase();
             songToSearch = message.body.slice(15);
@@ -81,11 +86,11 @@ const spotibot = async function spotibot(inputs, flags) {
             const NewsongToSearch = songToSearch.split(' ').join('+');
             console.log(NewsongToSearch)
 
-            // need to use got for this & official spotify api
-            //const searchResults = await spotifyApi.searchTracks(songToSearch);
+            // need to use got for this & official spotify API since spotify API changed
+            // const searchResults = await spotifyApi.searchTracks(songToSearch);
             // https://api.spotify.com/v1/search
 
-            var options = {
+            const options = {
               json: true, 
               headers: {
                 'Authorization' : `Bearer ${config.get('bearer')}`,
@@ -133,9 +138,11 @@ const spotibot = async function spotibot(inputs, flags) {
             const songToSearchforQueue = message.body.slice(15); // takes just the song name eg. "queue songname" will just take songname
             const searchResultsforQueue = await spotifyApi.searchTracks(songToSearchforQueue); // search results like before
             if (searchResultsforQueue.body.tracks.items[0] != null) {
+
                 const songToQueue = searchResultsforQueue.body.tracks.items[0].uri;
                 const searchQueueArtist = searchResultsforQueue.body.tracks.items[0].artists[0].name;
                 queue_array.push(songToQueue);
+                // need to do some max heap manipulation here
                 api.sendMessage(`Adding${songToSearchforQueue} by ${searchQueueArtist} up next 🎵`, message.threadID);
                 console.log(chalk.green(`spotibot just queued ${songToSearchforQueue} by ${searchQueueArtist}`));
             } else {
@@ -149,6 +156,7 @@ const spotibot = async function spotibot(inputs, flags) {
             spotify.next(function() {
               console.log(chalk.cyan('Playing the next song!'));
               api.sendMessage(`⏩ playing the next song`, message.threadID);
+              // pop off the heap
             });
           }
 
@@ -156,6 +164,7 @@ const spotibot = async function spotibot(inputs, flags) {
             spotify.previous(function() {
               console.log(chalk.cyan('Playing the previous song!'));
               api.sendMessage(`⏪ playing previous song`, message.threadID);
+              // heap needs to keep memory
             });
           }
 
