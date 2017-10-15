@@ -1,3 +1,5 @@
+# HEADS UP
+Spotify changed their API to include some awesome new features, so they need to be included in this project. The node wrappers have also changed so that needs to be updated too!
 # spotibot 🤖
 A Spotify Messenger bot <br> can make the bot an image to make larger
 For Mac OS <br> requirments

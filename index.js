@@ -11,7 +11,7 @@ const got = require('got');
 const myInformation = require('./config.json')
 const Heap = require('mnemonist/heap');
 
-// NEED TO TO ASK FOR FB AND SPOTIFY PASSWORD
+// remember to ask for fb and spotify logins
 
 // let MaxHeap = require('mnemonist/heap').MaxHeap;
 
@@ -75,7 +75,7 @@ const spotibot = async function spotibot(inputs, flags) {
 
         let spotifyApi = new SpotifyWebApi();
 
-        if (message.body !== undefined){
+        if (message.body !== undefined) {
 
           // @spotibot play <songname>
           if (message.body.indexOf('play ') > -1 && message.body.indexOf('@spotibot') > -1 && message.body.length !== 13) {
@@ -112,12 +112,12 @@ const spotibot = async function spotibot(inputs, flags) {
 
             if (searchResults.body.tracks.items[0] != null) {
               const searchArtist = searchResults.body.tracks.items[0].artists[0].name;
-              spotify.playTrack(searchResults.body.tracks.items[0].uri, function(){
+              spotify.playTrack(searchResults.body.tracks.items[0].uri, function() {
                   if(err) return console.error(err);
               });
             // Getting a track now requires an API key, so need to do this a different way
             // Can use GOT with the provided token to search for a track
-            setTimeout(function () { spotify.getTrack(function(err, track){
+            setTimeout(function () { spotify.getTrack(function(err, track) {
                 const name = track.name;
                 const artist = track.artist;
                 api.sendMessage(`spotibot currently playing ${name} by ${artist} 🎵`, message.threadID);
@@ -133,7 +133,7 @@ const spotibot = async function spotibot(inputs, flags) {
           }
 
           // @spotibot queue <songname>
-          if (message.body.indexOf('queue') > -1 && message.body.indexOf('@spotibot') > -1){
+          if (message.body.indexOf('queue') > -1 && message.body.indexOf('@spotibot') > -1) {
 
             const songToSearchforQueue = message.body.slice(15); // takes just the song name eg. "queue songname" will just take songname
             const searchResultsforQueue = await spotifyApi.searchTracks(songToSearchforQueue); // search results like before
@@ -183,7 +183,7 @@ const spotibot = async function spotibot(inputs, flags) {
           }
 
           if (message.body == '@spotibot play'){
-            spotify.getState(function(err, state){
+            spotify.getState(function(err, state) {
                 if (state.state !== 'playing'){
                   spotify.play(function() {
                     console.log(chalk.cyan('Playing the current song'));
@@ -215,8 +215,8 @@ const spotibot = async function spotibot(inputs, flags) {
                 const playlistNames = response.body.items;
                 let playlistURI;
                 let playlistOwner;
-                for (var i = 0;i<size;i++){
-                  if (playlistNames[i].name == playlistToSearch){
+                for (var i = 0;i<size;i++) {
+                  if (playlistNames[i].name == playlistToSearch) {
                     const foundPlaylist = playlistNames[i].name;
                     playlistURI = playlistNames[i].id;
                     playlistOwner = playlistNames[i].owner.id;
@@ -252,15 +252,15 @@ const spotibot = async function spotibot(inputs, flags) {
     const checkStatus = setInterval( async function() {
 
       spotify.getState(function(err, state){
-        // if spotify isn't open already on mac this breaks
-        if (Math.ceil(state.position) === 0 && state.state === 'paused'){
-          if (queue_array.length >= 1){
-              spotify.playTrack(queue_array[0], function(){
+        // if spotify isn't open already on mac this breaks, need to use the updated API to pick device
+        if (Math.ceil(state.position) === 0 && state.state === 'paused') {
+          if (queue_array.length >= 1) {
+              spotify.playTrack(queue_array[0], function() {
                   if(err) return console.error(err);
               });
               queue_array.shift();
               setTimeout(function () {
-              spotify.getTrack(function(err, track){
+              spotify.getTrack(function(err, track) {
                 const name = track.name;
                 const artist = track.artist;
                 console.log(chalk.green(`spotibot currently playing ${name} by ${artist}`));
