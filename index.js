@@ -9,7 +9,7 @@ const Conf = require('conf');
 const spotify = require('spotify-node-applescript');
 const got = require('got');
 const myInformation = require('./config.json')
-const Heap = require('mnemonist/heap');
+// const Heap = require('mnemonist/heap');
 
 // remember to ask for fb and spotify logins
 
@@ -52,6 +52,47 @@ function auth() {
   });
 }
 
+/*
+
+Need to get user device ID
+Store user ID
+
+PLAY SONG:
+
+1) Prase string to find song (if they also provided artist, double check)
+2) Get the album the song is part of 
+
+Use "Search for an Item" with the Item Type as "Track"
+The Query can be anything "Gorgeous Kanye West" and it will speficiy 
+
+3) Use the following callback for Start/Resume a User's Playback
+
+{
+  "context_uri": "spotify:album:0aCJuWaOV3k7B9NXf9dkAH",
+  "offset": {
+    "position": 5
+  }
+}
+
+context uri is album
+position is track on album (indexed at 0)
+
+So, when get the track need to get its position on the album (check to see if response provides this)
+
+QUEUE:
+
+Store in priority queue (heap)
+Every time requested, increase priority 
+
+When a song is finished 
+  "timestamp" : 1509144709288,
+  "progress_ms" : 2368,
+When these two equal
+
+Repeat steps as PLAY SONG (maybe write a function for this)
+
+*/
+
 const spotibot = async function spotibot(inputs, flags) {
 
   var queue_array = [];
@@ -74,6 +115,54 @@ const spotibot = async function spotibot(inputs, flags) {
           }
 
         let spotifyApi = new SpotifyWebApi();
+
+        // this is calling for every group chat
+        // need a way to specific the group chat's ID
+        // this can be used with @spotibot init or something
+
+        // Get device ID
+        const deviceOptions = {
+          json: true, 
+          headers: {
+            'Authorization' : `Bearer ${myInformation.bearer}`,
+            'Accept' : 'application/json'
+          }
+        };
+
+        got(`https://api.spotify.com/v1/me/player/devices`, deviceOptions)
+          .then(response => {
+            console.log(response.body.devices[0].id);
+            const deviceID = response.body.devices[0].id
+
+              const pauseOptions = {
+                json: true, 
+                headers: {
+                  'Authorization' : `Bearer ${myInformation.bearer}`,
+                  'Accept' : 'application/json'
+                }
+              };
+
+              got.put(`https://api.spotify.com/v1/me/player/pause?device_id=${deviceID}`, pauseOptions)
+                .then(response => {
+                  console.log("Playback pasued")
+                  // send fb message here
+                })
+                .catch(error => {
+                  console.log(error.response.body);
+                  //=> 'Internal server error ...'
+                });
+
+
+
+
+          })
+          .catch(error => {
+            console.log(error.response.body);
+            console.log("Error getting device ID");
+            //=> 'Internal server error ...'
+          });
+
+        return;
 
         if (message.body !== undefined) {
 
